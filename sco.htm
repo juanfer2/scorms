@@ -1,0 +1,144 @@
+<html>
+	<head>
+		<script src="SCORMGenericLogic.js" type="text/javascript" language="JavaScript"></script>
+		<script type="text/javascript" language="JavaScript">
+			//ACA SE PONE LA CANTIDAD DE PAGINAS QUE TENGA EL PAQUETE
+			var znNavigablePages = 20;
+			var znThisPage = 0;
+			var zaVisitedPages = new Array(znNavigablePages)
+			//Modificacion para poder controlar el audio de fondo, apagar encender y que no se reinicie al cambiar de page, la funcion
+			// se llama cuando el usuario presiona el boton de apagar - encender audio en el SWF
+			var pagsVisitadas = 0;
+			var estadoAudio = false;
+			var estadoSubs = true;
+
+			function controlarSubs() {
+				if (estadoSubs) {
+					estadoSubs = false;
+				} else {
+					estadoSubs = true;
+				}
+			}
+
+			function controlarAudio() {
+				if (estadoAudio) {
+					estadoAudio = false;
+				} else {	
+					estadoAudio = true;
+				}
+			}
+
+			//VARIABLE QUE CONTROLA LA PAGINA QUE ESTA VISUALIZANDO EL USUARIO Y PASA EL DATO A FLASH
+			var paginaActual = "1";
+			//FUNCION PARA ADELANTAR LA PAGINA
+			function NextPage() {
+				if (znThisPage < znNavigablePages) {
+					znThisPage++;
+					paginaActual++;
+
+				}
+			}
+
+			//FUNCION PARA DEVOLVER LA PAGINA
+			function PreviousPage() {
+				if (znThisPage > 1) {
+					znThisPage--;
+					paginaActual--;
+
+				}
+			}
+
+			//FUNCION PARA IR A UNA PAGINA DETERMINADA
+			function GoToPage(n) {
+				paginaActual = n;
+				if ((!isNaN(n)) && (n >= 1) && (n <= znNavigablePages)) {
+					myStage.location.href = "template.html";
+				}
+			}
+
+			function GoToPageEspecific(n) {
+				paginaActual = n;
+				if ((!isNaN(n)) && (n >= 1) && (n <= znNavigablePages)) {
+					myStage.location.href = "template.html";
+				}
+			}
+
+			//FUNCION QUE DETERMINA EN QUE PAGINA ESTA EL USUARIO Y ENVIA LOS DATOS AL LMS
+			function SetThisPage(n) {
+
+				paginaActual = n;
+				var i = 0;
+				var nCnt = 0
+				znThisPage = n;
+				zaVisitedPages[n - 1] = true;
+				for ( i = 0; i < znNavigablePages; i++) {
+					if (zaVisitedPages[i]) {
+						nCnt++;
+					}
+				}
+				if (nCnt == znNavigablePages) {
+					SCOSetStatusCompleted()
+				}
+				avance = (Math.ceil(g_nSCO_ScoreMax / znNavigablePages)) * nCnt;
+				pagsVisitadas = nCnt;
+				SCOSetValue("cmi.core.score.raw", avance);
+				SCOSetValue("cmi.core.exit", "suspend");
+				SCOSetValue("cmi.core.lesson_location", znThisPage);
+				SCOSetValue("cmi.suspend_data", zaVisitedPages.join(","));
+				SCOCommit();
+			}
+
+			function SCOInitData() {
+				var loc = 1;
+				if (SCOGetValue("cmi.core.entry") == "resume") {
+					var SuspendData = SCOGetValue("cmi.suspend_data")
+					if (SuspendData.length > 0) {
+						zaVisitedPages = SuspendData.split(",")
+					}
+					var loc = (parseInt(SCOGetValue("cmi.core.lesson_location")));
+					if (isNaN(loc)) {
+						loc = 1;
+					}
+				}
+				GoToPage(loc)
+			}
+
+			function SCOSaveData() {
+				if (znThisPage > znNavigablePages) {
+					SCOSetValue("cmi.core.exit", "") // this is the endpage, no need to resume
+				}
+			}
+
+			//FUNCION QUE SE LLAMA DESDE LA ULTIMA PAGINA DEL CURSO
+			function SCOFinished() {
+				SCOSetValue("cmi.core.score.raw", g_nSCO_ScoreMax);
+			}
+
+
+		</script>
+
+		<title></title>
+
+	</head>
+
+	<!--div>
+		<h1>Hola Universo</h1>
+		<input type="text" id="my_user" />
+	</div-->
+	<frameset rows="100%,*" border="0"
+
+	onload="SCOInitialize()"
+
+	onunload="SCOFinish()"
+
+	onbeforeunload="SCOFinish()">
+
+		
+
+		<frame name="myStage" title="Learning Object display window" src="page0.htm" />
+
+		<frame src="dummypage.htm" />
+
+	</frameset><noframes></noframes>
+
+</html>
